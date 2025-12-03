@@ -1,5 +1,5 @@
 {
-  "name": "my-turborepo",
+  "name": "janfrans-cargo-fs",
   "private": true,
   "scripts": {
     "build": "turbo run build",
