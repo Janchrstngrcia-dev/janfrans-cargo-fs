@@ -9,8 +9,12 @@ const poppins = Poppins({
 
 export const metadata = {
   title: "Janfrans",
-  description: "Janfrans Cargo Services",
-};
+  description: "Admin Dashboard for JanFrans Cargo Services",
+  icons: {
+    icon: '/janfrans.png',      
+    shortcut: '/janfrans.png',      
+  },
+}
 
 export default function RootLayout({ children }) {
   return (
