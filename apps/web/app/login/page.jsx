@@ -12,17 +12,60 @@ import Image from "next/image"
 export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false)
   const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
+  const [ password, setPassword ] = useState( "" )
+  const [errorMessage, setErrorMessage] = useState(null)
   const [isLoading, setIsLoading] = useState(false)
   const router = useRouter()
 
   const handleLogin = async (e) => {
     e.preventDefault()
     setIsLoading(true)
-    setTimeout(() => {
-      setIsLoading(false)
-      router.push("/admin/dashboard")
-    }, 1000)
+    setErrorMessage("")
+
+    try {
+      const response = await fetch('http://localhost:5000/api/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        localStorage.setItem('token', data.token); 
+
+        const userRole = data.user.role;
+        let redirectPath = '/'; 
+
+        switch (userRole) {
+          case 'admin':
+            redirectPath = '/admin/dashboard';
+            break;
+          case 'staff':
+            redirectPath = '/staff/dashboard';
+            break;
+          case 'driver':
+            redirectPath = '/driver/dashboard';
+            break;
+          default:
+            redirectPath = '/admin/dashboard'; 
+            break;
+        }
+
+        router.push(redirectPath);
+
+      } else {
+        setErrorMessage(data.message || 'Login failed. Please try again.');
+        setIsLoading(false);
+      }
+
+    } catch (error) {
+      console.error('Login Error:', error);
+      setErrorMessage('A network error occurred. Check if the API server is running.');
+      setIsLoading(false);
+    }
   }
 
   return (
