@@ -1,75 +1,76 @@
-const User = require('../models/User'); 
-const jwt = require('jsonwebtoken');
+const authService = require('../services/authService');
 
-// Generate JWT Token
-const generateToken = (id) => {
-  return jwt.sign({ id }, process.env.JWT_SECRET, {
-    expiresIn: process.env.JWT_EXPIRE
-  });
+exports.createInitialAdmin = async (req, res) => {
+  try {
+    const user = await authService.createInitialAdminService(req.body);
+    res.status(201).json({
+      success: true,
+      message: 'Initial admin user created successfully',
+      user
+    });
+  } catch (error) {
+    // Determine status code based on error message or type
+    const statusCode = error.message === 'Admin user already exists' ? 400 : 500;
+    
+    // Check for Mongoose Validation Error
+    if (error.name === 'ValidationError') {
+        const messages = Object.values(error.errors).map(val => val.message);
+        return res.status(400).json({ message: messages.join(', ') });
+    }
+    
+    res.status(statusCode).json({ message: error.message });
+  }
 };
 
-exports.register = async (req, res) => {
+exports.createUser = async (req, res) => {
   try {
-    const { name, email, password } = req.body;
-
-    const userExists = await User.findOne({ email });
-    if (userExists) {
-      return res.status(400).json({ message: 'User already exists' });
-    }
-
-    const user = await User.create({ name, email, password });
-
-    if (user) {
-      res.status(201).json({
-        success: true,
-        token: generateToken(user._id),
-        user: {
-          id: user._id,
-          name: user.name,
-          email: user.email,
-          role: user.role
-        }
-      });
-    }
+    const user = await authService.createUserService(req.body);
+    res.status(201).json({
+      success: true,
+      message: 'User created successfully',
+      user
+    });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    const statusCode = error.message === 'User already exists' ? 400 : 500;
+    
+    if (error.name === 'ValidationError') {
+        const messages = Object.values(error.errors).map(val => val.message);
+        return res.status(400).json({ message: messages.join(', ') });
+    }
+
+    res.status(statusCode).json({ message: error.message });
   }
 };
 
 exports.login = async (req, res) => {
   try {
     const { email, password } = req.body;
-
-    const user = await User.findOne({ email }).select('+password');
-
-    if (!user) {
-      return res.status(401).json({ message: 'Invalid credentials' });
-    }
-
-    const isMatch = await user.matchPassword(password);
-
-    if (!isMatch) {
-      return res.status(401).json({ message: 'Invalid credentials' });
-    }
-
+    const result = await authService.loginUserService(email, password);
+    
     res.json({
       success: true,
-      token: generateToken(user._id),
-      user: {
-        id: user._id,
-        name: user.name,
-        email: user.email,
-        role: user.role
-      }
+      token: result.token,
+      user: result.user
     });
+  } catch (error) {
+    const statusCode = error.message === 'Invalid credentials' ? 401 : 500;
+    res.status(statusCode).json({ message: error.message });
+  }
+};
+
+exports.getMe = async (req, res) => {
+  try {
+    const user = await authService.getUserByIdService(req.user.id);
+    res.json({ success: true, user });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
-exports.getMe = async (req, res) => {
+
+exports.getAllUsers = async (req, res) => {
   try {
-    const user = await User.findById(req.user.id);
-    res.json({ success: true, user });
+    const users = await authService.getAllUsersService();
+    res.status(200).json({ success: true, count: users.length, users });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
