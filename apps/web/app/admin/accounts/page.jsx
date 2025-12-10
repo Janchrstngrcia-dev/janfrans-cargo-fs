@@ -1,50 +1,44 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback, useRef } from "react"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { UsersTable } from "@/modules/accounts/components/users-table"
 import { ClientsTable } from "@/modules/accounts/components/clients-table"
 import { AddUserDialog } from "@/modules/accounts/components/add-user-dialog"
 import { AddClientDialog } from "@/modules/accounts/components/add-client-dialog"
-import { clientAccounts } from "@/modules/accounts/data" 
-import { Users, Building2, Loader2, RefreshCw } from "lucide-react"
+import { Users, Building2, Loader2 } from "lucide-react" // Removed RefreshCw
 import { Button } from "@/components/ui/button"
 import { toast } from "sonner"
 
 export default function AccountsPage() {
   const [activeTab, setActiveTab] = useState("users")
   const [users, setUsers] = useState([]) 
-  const [loading, setLoading] = useState(true)
+  const [loadingUsers, setLoadingUsers] = useState(true)
+  const [clients, setClients] = useState([])
+  const [loadingClients, setLoadingClients] = useState(true)
+  const loadedRef = useRef({ users: false, clients: false });
 
   const getRoleId = (role) => {
-    const roleMap = {
-      'admin': 2,
-      'staff': 3,
-      'driver': 4,
-      'user': 3 
-    };
+    const roleMap = { 'admin': 2, 'staff': 3, 'driver': 4, 'user': 3 };
     return roleMap[role] || 3;
   }
 
   const fetchUsers = useCallback(async (isManualRefresh = false) => {
-    setLoading(true);
-    const token = localStorage.getItem('token');
-    
-    if (!token) {
-        console.error("No auth token found");
-        setLoading(false);
-        toast.error("Authentication Required", { description: "Please log in to view user data." });
+    if (!isManualRefresh && loadedRef.current.users) {
+        setLoadingUsers(false);
         return;
     }
 
+    if (activeTab === 'users') setLoadingUsers(true);
+    
+    const token = localStorage.getItem('token');
+    if (!token) { setLoadingUsers(false); return; }
+
     try {
       const res = await fetch('http://localhost:5000/api/auth/users', { 
-        headers: {
-          'Authorization': `Bearer ${token}`
-        },
+        headers: { 'Authorization': `Bearer ${token}` },
         cache: 'no-store' 
       });
-      
       const data = await res.json();
 
       if (res.ok && data.users) {
@@ -59,40 +53,69 @@ export default function AccountsPage() {
         }));
         setUsers(mappedUsers);
 
-        if (isManualRefresh) {
-            toast.success("List Updated", {
-                description: "User list has been refreshed successfully."
-            })
-        }
-      } else {
-        console.error("Failed to fetch:", data.message);
-        if (isManualRefresh) {
-            toast.error("Refresh Failed", {
-                description: data.message || "Could not fetch users."
-            })
-        }
+        loadedRef.current.users = true; 
+
+        if (isManualRefresh) toast.success("Users Updated");
       }
     } catch (error) {
-      console.error("Error fetching users:", error);
-      if (isManualRefresh) {
-        toast.error("Network Error", {
-            description: "Please check your connection."
-        })
-      }
+      console.error(error);
+      if (isManualRefresh) toast.error("Network Error: Could not fetch users");
     } finally {
-      setLoading(false);
+      if (activeTab === 'users') setLoadingUsers(false);
     }
-  }, []); 
+  }, [activeTab]); 
 
-  const handleManualRefresh = () => {
-      fetchUsers(true);
-  }
+  const fetchClients = useCallback(async (isManualRefresh = false) => {
+    if (!isManualRefresh && loadedRef.current.clients) {
+        setLoadingClients(false);
+        return;
+    }
+
+    if (activeTab === 'clients') setLoadingClients(true);
+    
+    const token = localStorage.getItem('token');
+    if (!token) { setLoadingClients(false); return; }
+
+    try {
+      const res = await fetch('http://localhost:5000/api/clients', { 
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await res.json(); 
+
+      if (res.ok && data.clients) {
+        const mappedClients = data.clients.map(client => ({
+            id: client._id,
+            fullName: client.fullName,
+            mobile: client.mobile,
+            userType: client.userType,
+            status: client.status,
+            createdAt: client.createdAt
+        }));
+        setClients(mappedClients);
+        
+        loadedRef.current.clients = true;
+
+        if (isManualRefresh) toast.success("Clients Updated");
+      } else {
+         if (isManualRefresh) toast.error("Failed to load clients");
+      }
+    } catch (error) {
+      console.error("Error fetching clients:", error);
+      if (isManualRefresh) toast.error("Network Error: Could not fetch clients");
+    } finally {
+      if (activeTab === 'clients') setLoadingClients(false);
+    }
+  }, [activeTab]);
 
   useEffect(() => {
     if (activeTab === "users") {
       fetchUsers(false); 
+    } else if (activeTab === "clients") {
+      fetchClients(false);
     }
-  }, [activeTab, fetchUsers]);
+  }, [activeTab, fetchUsers, fetchClients]);
+
+  const isLoading = activeTab === "users" ? loadingUsers : loadingClients;
 
   return (
     <div className="space-y-6">
@@ -103,21 +126,10 @@ export default function AccountsPage() {
         </div>
         
         <div className="flex gap-2">
-            {activeTab === "users" && (
-                <Button 
-                    variant="ghost" 
-                    size="icon" 
-                    onClick={handleManualRefresh} 
-                    disabled={loading} 
-                    title="Refresh Table"
-                >
-                    <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
-                </Button>
-            )}
             {activeTab === "users" ? (
                 <AddUserDialog onSuccess={() => fetchUsers(true)} /> 
             ) : (
-                <AddClientDialog />
+                <AddClientDialog onSuccess={() => fetchClients(true)} />
             )}
         </div>
       </div>
@@ -135,7 +147,7 @@ export default function AccountsPage() {
         </TabsList>
         
         <TabsContent value="users">
-          {loading ? (
+          {loadingUsers ? (
             <div className="flex flex-col items-center justify-center h-64 space-y-4 border rounded-lg bg-card">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
                 <p className="text-muted-foreground">Loading users...</p>
@@ -146,7 +158,14 @@ export default function AccountsPage() {
         </TabsContent>
         
         <TabsContent value="clients">
-          <ClientsTable clients={clientAccounts} />
+          {loadingClients ? (
+            <div className="flex flex-col items-center justify-center h-64 space-y-4 border rounded-lg bg-card">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                <p className="text-muted-foreground">Loading clients...</p>
+            </div>
+          ) : (
+             <ClientsTable clients={clients} />
+          )}
         </TabsContent>
       </Tabs>
     </div>
