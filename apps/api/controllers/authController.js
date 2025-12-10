@@ -61,9 +61,19 @@ exports.login = async (req, res) => {
 exports.getMe = async (req, res) => {
   try {
     const user = await authService.getUserByIdService(req.user.id);
-    res.json({ success: true, user });
+    
+    res.json({ 
+      success: true, 
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        mobile: user.mobile
+      }
+    });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({ success: false, message: error.message });
   }
 };
 
