@@ -8,28 +8,26 @@ import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Pencil, Search, MoreHorizontal, Ban, Power } from "lucide-react"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { getUserType, getUserStatus } from "@/modules/accounts/data"
+import { getUserType, getUserStatus } from "@/modules/accounts/data" 
 
-// Styles adapted to vehicle-table aesthetic
 const typeColors = {
   5: "bg-teal-500/20 text-teal-700 border-teal-500/30",
   6: "bg-indigo-500/20 text-indigo-700 border-indigo-500/30",
 }
 
 const statusStyles = {
-  1: "bg-emerald-500/20 text-emerald-700 border-emerald-500/30", // Active
-  0: "bg-red-500/20 text-red-700 border-red-500/30", // Inactive
+  1: "bg-emerald-500/20 text-emerald-700 border-emerald-500/30", 
+  0: "bg-red-500/20 text-red-700 border-red-500/30", 
 }
 
-export function ClientsTable({ clients }) {
+export function ClientsTable({ clients = [] }) {
   const [search, setSearch] = useState("")
   const [typeFilter, setTypeFilter] = useState("all")
 
   const filteredClients = clients.filter((client) => {
-    const matchesSearch =
-      client.fullName.toLowerCase().includes(search.toLowerCase()) ||
-      client.username.toLowerCase().includes(search.toLowerCase())
+    const matchesSearch = client.fullName.toLowerCase().includes(search.toLowerCase())
     const matchesType = typeFilter === "all" || client.userType === Number.parseInt(typeFilter)
+    
     return matchesSearch && matchesType
   })
 
@@ -40,7 +38,7 @@ export function ClientsTable({ clients }) {
         <div className="relative flex items-center gap-2 flex-1">
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder="Search by name or email..."
+            placeholder="Search by name..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="pl-9 max-w-sm bg-card border-border"
