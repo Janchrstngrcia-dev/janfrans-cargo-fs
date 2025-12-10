@@ -6,19 +6,36 @@ import { cn } from "@/lib/utils"
 import { LayoutDashboard, Users, Package, Receipt, BarChart3, Truck, Activity } from "lucide-react"
 import Image from "next/image"
 
-const navItems = [
+const adminNavItems = [
   { name: "Dashboard", href: "/admin/dashboard", icon: LayoutDashboard },
   { name: "Accounts", href: "/admin/accounts", icon: Users },
   { name: "Deliveries", href: "/admin/deliveries", icon: Package },
   { name: "Billing", href: "/admin/billing", icon: Receipt },
   { name: "Reports", href: "/admin/reports", icon: BarChart3 },
   { name: "Vehicle", href: "/admin/vehicle", icon: Truck },
-//   { name: "Maintenance", href: "/admin/maintenance", icon: Wrench },
   { name: "Activity Log", href: "/admin/activity-log", icon: Activity },
 ]
 
-export function Sidebar() {
+const staffNavItems = [
+  { name: "Dashboard", href: "/staff/dashboard", icon: LayoutDashboard },
+  { name: "Deliveries", href: "/staff/deliveries", icon: Package },
+  { name: "Reports", href: "/staff/reports", icon: BarChart3 },
+]
+
+const driverNavItems = [
+  { name: "Dashboard", href: "/driver/dashboard", icon: LayoutDashboard },
+  { name: "My Deliveries", href: "/driver/deliveries", icon: Package },
+]
+
+export function Sidebar({ user }) {
   const pathname = usePathname()
+  
+  let navItems = adminNavItems
+  if (user?.role === 'staff') {
+    navItems = staffNavItems
+  } else if (user?.role === 'driver') {
+    navItems = driverNavItems
+  }
 
   return (
     <aside className="fixed left-0 top-0 z-40 h-screen w-64 border-r border-border bg-sidebar">
