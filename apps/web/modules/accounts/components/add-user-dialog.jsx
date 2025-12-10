@@ -18,6 +18,12 @@ import
 import { Plus, CheckCircle, XCircle, Loader2 } from "lucide-react"
 import { toast } from "sonner" 
 
+const secretQuestions = {
+  "1": "What was your childhood nickname?",
+  "2": "What is the name of your favorite childhood friend?",
+  "3": "What was your dream job as a child?"
+}
+
 export function AddUserDialog ({ onSuccess })
 {
   const [ open, setOpen ] = useState( false )
@@ -40,7 +46,11 @@ export function AddUserDialog ({ onSuccess })
 
   const handleValueChange = ( field, value ) =>
   {
-    setFormData( { ...formData, [ field ]: value } )
+    if (field === "secretQuestion") {
+      setFormData( { ...formData, [ field ]: secretQuestions[value] } )
+    } else {
+      setFormData( { ...formData, [ field ]: value } )
+    }
   }
 
   const validateForm = () => {
@@ -60,11 +70,12 @@ export function AddUserDialog ({ onSuccess })
     return true;
   };
 
-const handleSubmit = async () =>
+  const handleSubmit = async () =>
   {
     if (!validateForm()) {
         return;
     }
+    
     if ( formData.password !== formData.confirmPassword )
     {
       toast.error( "Validation Error", {
@@ -86,13 +97,24 @@ const handleSubmit = async () =>
     setLoading( true )
     try
     {
+      // Send data in the format your backend expects
+      const payload = {
+        fullName: formData.fullName,
+        email: formData.email,
+        mobile: formData.mobile,
+        role: formData.role,
+        password: formData.password,
+        secretQuestion: formData.secretQuestion,
+        secretAnswer: formData.secretAnswer
+      }
+
       const res = await fetch( 'http://localhost:5000/api/auth/register', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}` 
         },
-        body: JSON.stringify( formData ),
+        body: JSON.stringify( payload ),
       } )
 
       const data = await res.json()
@@ -107,6 +129,7 @@ const handleSubmit = async () =>
         
         throw new Error(errorMessage)
       }
+      
       toast.success( "User created successfully!", {
         description: `${formData.fullName} has been added to the system.`
       } )
@@ -129,6 +152,7 @@ const handleSubmit = async () =>
       setLoading( false )
     }
   }
+  
   const password = formData.password
   const validations = {
     length: password.length >= 8,
