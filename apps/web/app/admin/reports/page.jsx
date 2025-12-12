@@ -26,10 +26,8 @@ export default function ReportsPage() {
   const currentReport = reportTypes[reportType]
   const ReportIcon = currentReport.icon
 
-  // Filter data based on search criteria
   const filteredData = useMemo(() => {
     return currentReport.data.filter((item) => {
-      // Get the ID field based on report type
       const idField = reportType === "motorcycle" ? item.mcId : item.seriesNo
       const customerField = reportType === "motorcycle" ? item.driver : item.driver
 
@@ -37,7 +35,6 @@ export default function ReportsPage() {
       const matchesCustomer =
         searchCustomer === "" || customerField?.toLowerCase().includes(searchCustomer.toLowerCase())
 
-      // Date filtering
       let matchesDate = true
       if (startDate && endDate) {
         const itemDate = new Date(item.date)
