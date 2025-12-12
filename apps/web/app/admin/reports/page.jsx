@@ -59,7 +59,6 @@ export default function ReportsPage() {
     window.print()
   }
 
-  // Render the appropriate table based on report type
   const renderTable = () => {
     switch (reportType) {
       case "express":
