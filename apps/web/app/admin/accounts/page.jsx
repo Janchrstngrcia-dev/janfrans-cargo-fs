@@ -6,7 +6,7 @@ import { UsersTable } from "@/modules/accounts/components/users-table"
 import { ClientsTable } from "@/modules/accounts/components/clients-table"
 import { AddUserDialog } from "@/modules/accounts/components/add-user-dialog"
 import { AddClientDialog } from "@/modules/accounts/components/add-client-dialog"
-import { Users, Building2, Loader2 } from "lucide-react" // Removed RefreshCw
+import { Users, Building2, Loader2 } from "lucide-react" 
 import { Button } from "@/components/ui/button"
 import { toast } from "sonner"
 
