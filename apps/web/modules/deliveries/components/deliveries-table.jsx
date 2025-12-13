@@ -8,9 +8,8 @@ import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { MoreHorizontal, Eye, Pencil, Trash2, MapPin, Search } from "lucide-react"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { deliveryStatusMap, deliveryStatusOptions } from "@/modules/deliveries/data"
+import { deliveryStatusMap, deliveryStatusOptions, payModeOptions, deliveryCategoryOptions } from "@/modules/deliveries/data"
 
-// Styles adapted to match the vehicle-table aesthetic (outline/opacity)
 const statusStyles = {
   1: "bg-blue-500/20 text-blue-600 border-blue-500/30",
   2: "bg-amber-500/20 text-amber-600 border-amber-500/30",
@@ -30,8 +29,9 @@ export function DeliveriesTable({ deliveries }) {
     return date.toLocaleDateString("en-CA")
   }
 
+  // Restored: Used for the "Delivered" column
   const formatDateTime = (dateString) => {
-    if (!dateString) return ""
+    if (!dateString) return "-"
     const date = new Date(dateString)
     return date.toLocaleString("en-US", {
       year: "numeric",
@@ -42,12 +42,24 @@ export function DeliveriesTable({ deliveries }) {
     })
   }
 
+  const getLabel = (options, value) => {
+    const found = options.find((opt) => opt.value === value)
+    return found ? found.label : value
+  }
+
+  // Restored: Used for the "Location" column
+  const openMap = (lat, lng) => {
+    if (lat && lng) {
+      window.open(`https://www.google.com/maps?q=${lat},${lng}`, "_blank")
+    }
+  }
+
   const filteredDeliveries = deliveries.filter((delivery) => {
     const matchesSearch =
       searchValue === "" ||
-      delivery.trackingId.toLowerCase().includes(searchValue.toLowerCase()) ||
-      delivery.customerName.toLowerCase().includes(searchValue.toLowerCase()) ||
-      delivery.driverName.toLowerCase().includes(searchValue.toLowerCase())
+      delivery.trackingNo.toLowerCase().includes(searchValue.toLowerCase()) ||
+      delivery.shipperName.toLowerCase().includes(searchValue.toLowerCase()) ||
+      delivery.consigneeName.toLowerCase().includes(searchValue.toLowerCase())
 
     const matchesStatus =
       statusFilter === "" || statusFilter === "0" || delivery.deliveryStatus.toString() === statusFilter
@@ -56,12 +68,6 @@ export function DeliveriesTable({ deliveries }) {
   })
 
   const displayedDeliveries = filteredDeliveries.slice(0, Number.parseInt(itemsPerPage))
-
-  const openMap = (lat, lng) => {
-    if (lat && lng) {
-      window.open(`https://www.google.com/maps?q=${lat},${lng}`, "_blank")
-    }
-  }
 
   return (
     <div className="space-y-4">
@@ -94,46 +100,52 @@ export function DeliveriesTable({ deliveries }) {
         </div>
       </div>
 
-      {/* Table - Updated to match VehicleTable design */}
+      {/* Table */}
       <div className="rounded-lg border border-border bg-card overflow-x-auto text-center">
         <Table>
           <TableHeader>
             <TableRow className="border-border hover:bg-transparent">
               <TableHead className="text-muted-foreground text-center">Tracking No.</TableHead>
               <TableHead className="text-muted-foreground text-center">Date</TableHead>
-              <TableHead className="text-muted-foreground text-center">Customer</TableHead>
-              <TableHead className="text-muted-foreground text-center">Address</TableHead>
-              <TableHead className="text-muted-foreground text-center">Driver</TableHead>
+              <TableHead className="text-muted-foreground text-center">Shipper</TableHead>
+              <TableHead className="text-muted-foreground text-center">Consignee</TableHead>
+              <TableHead className="text-muted-foreground text-center">Pay Mode</TableHead>
+              <TableHead className="text-muted-foreground text-center">Amount</TableHead>
               <TableHead className="text-muted-foreground text-center">Status</TableHead>
+              {/* Restored Columns */}
               <TableHead className="text-muted-foreground text-center">Delivered</TableHead>
               <TableHead className="text-muted-foreground text-center">Remarks</TableHead>
               <TableHead className="text-muted-foreground text-center">Location</TableHead>
+              
               <TableHead className="text-muted-foreground text-center w-[50px]"></TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {displayedDeliveries.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={10} className="text-center py-10 text-muted-foreground">
+                <TableCell colSpan={11} className="text-center py-10 text-muted-foreground">
                   No Data Found
                 </TableCell>
               </TableRow>
             ) : (
               displayedDeliveries.map((delivery) => (
                 <TableRow key={delivery.id} className="border-border">
-                  <TableCell className="font-medium text-primary">{delivery.trackingId}</TableCell>
+                  <TableCell className="font-medium text-primary">{delivery.trackingNo}</TableCell>
                   <TableCell className="text-muted-foreground">{formatDate(delivery.createdAt)}</TableCell>
-                  <TableCell className="text-foreground">{delivery.customerName}</TableCell>
-                  <TableCell className="text-muted-foreground max-w-[200px] truncate">
-                    {`${delivery.street} ${delivery.barangay} ${delivery.city}`}
-                  </TableCell>
-                  <TableCell className="text-muted-foreground">{delivery.driverName}</TableCell>
+                  <TableCell className="text-foreground">{delivery.shipperName}</TableCell>
+                  <TableCell className="text-foreground">{delivery.consigneeName}</TableCell>
+                  <TableCell className="text-muted-foreground">{getLabel(payModeOptions, delivery.payMode)}</TableCell>
+                  <TableCell className="text-muted-foreground">{delivery.totalAmount}</TableCell>
                   <TableCell>
                     <Badge variant="outline" className={statusStyles[delivery.deliveryStatus]}>
                       {deliveryStatusMap[delivery.deliveryStatus]}
                     </Badge>
                   </TableCell>
-                  <TableCell className="text-muted-foreground">{formatDateTime(delivery.estimatedTime)}</TableCell>
+                  
+                  {/* Restored Cells */}
+                  <TableCell className="text-muted-foreground text-sm">
+                    {formatDateTime(delivery.estimatedTime)}
+                  </TableCell>
                   <TableCell className="text-muted-foreground max-w-[150px] truncate">
                     {delivery.remarks || "-"}
                   </TableCell>
@@ -152,6 +164,7 @@ export function DeliveriesTable({ deliveries }) {
                       <span className="text-muted-foreground text-sm">-</span>
                     )}
                   </TableCell>
+
                   <TableCell>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
