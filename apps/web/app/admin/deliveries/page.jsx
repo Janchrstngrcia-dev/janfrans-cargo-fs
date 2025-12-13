@@ -1,6 +1,5 @@
-import { Button } from "@/components/ui/button"
-import { Plus } from "lucide-react"
 import { DeliveriesTable } from "@/modules/deliveries/components/deliveries-table"
+import { AddDeliveryDialog } from "@/modules/deliveries/components/add-deliveries-dialog"
 import { deliveries } from "@/modules/deliveries/data"
 
 export default function DeliveriesPage() {
@@ -11,10 +10,7 @@ export default function DeliveriesPage() {
           <h1 className="text-2xl font-bold text-foreground">Deliveries</h1>
           <p className="text-muted-foreground">Track and manage all cargo deliveries</p>
         </div>
-        <Button className="bg-primary text-primary-foreground hover:bg-primary/90">
-          <Plus className="h-4 w-4" />
-          New Delivery
-        </Button>
+        <AddDeliveryDialog />
       </div>
       <DeliveriesTable deliveries={deliveries} />
     </div>
