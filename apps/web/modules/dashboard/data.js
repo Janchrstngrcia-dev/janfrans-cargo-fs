@@ -14,15 +14,16 @@ export const recentDeliveries = [
 ]
 
 export const deliveryChartData = [
-  { month: "Jan", deliveries: 186 },
-  { month: "Feb", deliveries: 205 },
-  { month: "Mar", deliveries: 237 },
-  { month: "Apr", deliveries: 273 },
-  { month: "May", deliveries: 209 },
-  { month: "Jun", deliveries: 314 },
-  { month: "Jul", deliveries: 298 },
-  { month: "Aug", deliveries: 342 },
-  { month: "Sep", deliveries: 356 },
-  { month: "Oct", deliveries: 389 },
-  { month: "Nov", deliveries: 412 },
+  { month: "Jan", deliveries: 186, revenue: 120000 },
+  { month: "Feb", deliveries: 205, revenue: 135000 },
+  { month: "Mar", deliveries: 237, revenue: 155000 },
+  { month: "Apr", deliveries: 273, revenue: 170000 },
+  { month: "May", deliveries: 209, revenue: 140000 },
+  { month: "Jun", deliveries: 314, revenue: 195000 },
+  { month: "Jul", deliveries: 298, revenue: 188000 },
+  { month: "Aug", deliveries: 342, revenue: 210000 },
+  { month: "Sep", deliveries: 356, revenue: 225000 },
+  { month: "Oct", deliveries: 389, revenue: 240000 },
+  { month: "Nov", deliveries: 412, revenue: 265000 },
+  { month: "Dec", deliveries: 350, revenue: 200000 },
 ]
