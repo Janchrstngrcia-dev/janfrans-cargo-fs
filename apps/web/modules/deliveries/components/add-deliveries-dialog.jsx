@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import {
     Dialog,
@@ -21,10 +21,12 @@ import { payModeOptions, deliveryCategoryOptions } from "@/modules/deliveries/da
 export function AddDeliveryDialog({ onSuccess }) {
     const [open, setOpen] = useState(false)
     const [loading, setLoading] = useState(false)
+    const [clients, setClients] = useState([]) 
     
-    // Initialize form with default values
+    const generateTracking = () => `JANFRANS-${Math.floor(Math.random() * 1000000)}`
+
     const [formData, setFormData] = useState({
-        trackingNo: "JANFRANS2512130001", // Example static or auto-generated value
+        trackingNo: generateTracking(), 
         shipperName: "",
         consigneeName: "",
         totalAmount: "",
@@ -34,72 +36,66 @@ export function AddDeliveryDialog({ onSuccess }) {
         attemptCount: "0"
     })
 
-    const handleChange = (e) => {
-        setFormData({ ...formData, [e.target.id]: e.target.value })
-    }
-
-    const handleValueChange = (field, value) => {
-        setFormData({ ...formData, [field]: value })
-    }
-
-    const validateForm = () => {
-        const requiredFields = [
-            'shipperName', 
-            'consigneeName', 
-            'totalAmount', 
-            'payMode', 
-            'chargeableWeight', 
-            'deliveryCategory'
-        ];
-        
-        const missingFields = requiredFields.filter(field => !formData[field]);
-
-        if (missingFields.length > 0) {
-            toast.error("Missing Required Fields", {
-                description: "Please fill in all mandatory shipping information."
-            });
-            return false;
+    useEffect(() => {
+        const fetchClients = async () => {
+            try {
+                const token = localStorage.getItem('token')
+                const res = await fetch('http://localhost:5000/api/clients', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                })
+                const data = await res.json()
+                
+                if (data.success && Array.isArray(data.clients)) {
+                    setClients(data.clients)
+                }
+            } catch (error) {
+                console.error("Failed to fetch clients", error)
+                toast.error("Could not load clients list")
+            }
         }
-        return true;
-    };
+
+        fetchClients()
+    }, [])
+
+    const handleChange = (e) => setFormData({ ...formData, [e.target.id]: e.target.value })
+    const handleValueChange = (field, value) => setFormData({ ...formData, [field]: value })
 
     const handleSubmit = async () => {
-        if (!validateForm()) return;
-
         const token = localStorage.getItem('token')
-        if (!token) {
-            toast.error("Authentication Error", {
-                description: "Admin token not found. Please log in first."
-            })
-            return
+        
+        if (!formData.shipperName || !formData.totalAmount || !formData.consigneeName) {
+             toast.error("Please fill in all required fields"); return;
         }
 
         setLoading(true)
         try {
-            // Placeholder API call - ensure this matches your backend route
+            const payload = {
+                ...formData,
+                totalAmount: parseFloat(formData.totalAmount),
+                chargeableWeight: parseFloat(formData.chargeableWeight || 0),
+                attemptCount: parseInt(formData.attemptCount || 0)
+            }
+
             const res = await fetch('http://localhost:5000/api/deliveries', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${token}`
                 },
-                body: JSON.stringify(formData),
+                body: JSON.stringify(payload),
             })
 
             const data = await res.json()
+            if (!res.ok) throw new Error(data.message || 'Failed')
 
-            if (!res.ok) {
-                throw new Error(data.message || 'Failed to create delivery')
-            }
-
-            toast.success("Delivery created successfully!", {
-                description: `Tracking No: ${formData.trackingNo} has been added.`
-            })
-
+            toast.success("Delivery created successfully!")
             setOpen(false)
-            // Reset form (keep tracking no logic dynamic if needed)
+            
+            // Reset form
             setFormData({
-                trackingNo: "JANFRANS2512130002", // Simulate next ID
+                trackingNo: generateTracking(),
                 shipperName: "",
                 consigneeName: "",
                 totalAmount: "",
@@ -109,12 +105,9 @@ export function AddDeliveryDialog({ onSuccess }) {
                 attemptCount: "0"
             })
 
-            if (onSuccess) onSuccess();
-
+            if (onSuccess) onSuccess(); 
         } catch (error) {
-            toast.error("Error creating delivery", {
-                description: error.message
-            })
+            toast.error(error.message)
         } finally {
             setLoading(false)
         }
@@ -161,12 +154,20 @@ export function AddDeliveryDialog({ onSuccess }) {
                         <Label htmlFor="consigneeName">Consignee Name</Label>
                         <Select onValueChange={(val) => handleValueChange("consigneeName", val)}>
                             <SelectTrigger className="w-full">
-                                <SelectValue placeholder="Select or search for consignee" />
+                                <SelectValue placeholder="Select Consignee" />
                             </SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="abc">ABC Corporation</SelectItem>
-                                <SelectItem value="xyz">XYZ Industries</SelectItem>
-                                <SelectItem value="juan">Juan Dela Cruz</SelectItem>
+                                {clients.length > 0 ? (
+                                    clients.map((client) => (
+                                        <SelectItem key={client._id} value={client.fullName}>
+                                            {client.fullName}
+                                        </SelectItem>
+                                    ))
+                                ) : (
+                                    <div className="p-2 text-sm text-muted-foreground text-center">
+                                        No clients found
+                                    </div>
+                                )}
                             </SelectContent>
                         </Select>
                     </div>
