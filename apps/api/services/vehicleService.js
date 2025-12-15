@@ -17,9 +17,9 @@ exports.getAllVehiclesService = async () => {
 exports.getVehicleByIdService = async ( vehicleId ) => {
     return await Vehicle.findById( vehicleId );
 }
+
 exports.updateVehicleService = async ( vehicleId, updateData ) => {
-    return await Vehicle.findByIdAnd
-    update( vehicleId, updateData, { new: true } );
+    return await Vehicle.findByIdAndUpdate( vehicleId, updateData, { new: true } ); 
 };
 
 exports.deleteVehicleService = async ( vehicleId ) => {
