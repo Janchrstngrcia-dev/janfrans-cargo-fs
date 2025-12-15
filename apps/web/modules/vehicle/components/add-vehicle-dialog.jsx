@@ -12,7 +12,12 @@ import { toast } from "sonner"
 export function AddVehicleDialog({ onSuccess }) {
     const [open, setOpen] = useState(false)
     const [loading, setLoading] = useState(false)
-    const [formData, setFormData] = useState({})
+    const [formData, setFormData] = useState({
+        vehicleName: '',
+        model: '',
+        plateNumber: '',
+        vehicleType: ''
+    })
 
     const handleValueChange = (field, value) => {
         setFormData((prev) => ({
@@ -26,19 +31,32 @@ export function AddVehicleDialog({ onSuccess }) {
         setLoading(true)
 
         try {
-            console.log("Submitting:", formData)
-            
-            await new Promise(resolve => setTimeout(resolve, 1000));
+            const token = localStorage.getItem('token'); 
+
+            const response = await fetch('http://localhost:5000/api/vehicles/add', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify(formData)
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.message || "Failed to add vehicle");
+            }
             
             toast.success("Vehicle added successfully")
             
-            setFormData({})
+            setFormData({ vehicleName: '', model: '', plateNumber: '', vehicleType: '' })
             
             if (onSuccess) onSuccess();
-            
             setOpen(false)
         } catch (error) {
-            toast.error("Failed to add vehicle")
+            console.error(error);
+            toast.error(error.message)
         } finally {
             setLoading(false)
         }
@@ -62,50 +80,52 @@ export function AddVehicleDialog({ onSuccess }) {
                 
                 <form onSubmit={handleSubmit} className="grid gap-4 py-4">
                     <div className="space-y-2">
-                        <Label htmlFor="vehicleType">Vehicle</Label>
+                        <Label htmlFor="vehicleName">Vehicle Name</Label>
                         <Input
                             id="vehicleName"
                             placeholder="Enter vehicle name"
-                            value={formData.vehicleType || ''}
-                            onChange={(e) => handleValueChange('vehicleType', e.target.value)}
+                            value={formData.vehicleName}
+                            onChange={(e) => handleValueChange('vehicleName', e.target.value)}
                             required 
                         />
                     </div>
                     <div className="flex gap-4">
                         <div className="space-y-2 flex-1">
-                        <Label htmlFor="model">Model</Label>
-                        <Input
-                            id="model"
-                            placeholder="Enter vehicle model"
-                            value={formData.model || ''}
-                            onChange={(e) => handleValueChange('model', e.target.value)}
-                            required
-                        />
+                            <Label htmlFor="model">Model</Label>
+                            <Input
+                                id="model"
+                                placeholder="Enter vehicle model"
+                                value={formData.model}
+                                onChange={(e) => handleValueChange('model', e.target.value)}
+                                required
+                            />
+                        </div>
+                        <div className="space-y-2 flex-1">
+                            <Label htmlFor="plateNumber">Plate Number</Label>
+                            <Input
+                                id="plateNumber"
+                                placeholder="Enter plate number"
+                                value={formData.plateNumber}
+                                onChange={(e) => handleValueChange('plateNumber', e.target.value)}
+                                required 
+                            />
+                        </div>
                     </div>
-                    <div className="space-y-2 flex-1">
-                        <Label htmlFor="plateNumber">Plate Number</Label>
-                        <Input
-                            id="plateNumber"
-                            placeholder="Enter plate number"
-                            value={formData.plateNumber || ''}
-                            onChange={(e) => handleValueChange('plateNumber', e.target.value)}
-                            required 
-                        />
-                    </div>
-                    </div>
+                    
                     <div className="space-y-2">
                         <Label htmlFor="vehicleType">Vehicle Type</Label>
-                        <Select onChange={(val) => handleValueChange('vehicleCategory', val)}>
+                        <Select onValueChange={(val) => handleValueChange('vehicleType', val)}>
                             <SelectTrigger className="w-full">
                                 <SelectValue placeholder="Select vehicle type" />
                             </SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="truck">Express</SelectItem>
-                                <SelectItem value="van">Forward</SelectItem>
-                                <SelectItem value="car">Motorcycle</SelectItem>
+                                <SelectItem value="Express">Express</SelectItem>
+                                <SelectItem value="Forward">Forward</SelectItem>
+                                <SelectItem value="Motorcycle">Motorcycle</SelectItem>
                             </SelectContent>
                         </Select>
                     </div>
+
                     <div className="mt-4 flex justify-end gap-2">
                         <Button type="button" variant="secondary" onClick={() => setOpen(false)} disabled={loading}>
                             Cancel
