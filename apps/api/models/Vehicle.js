@@ -1,5 +1,6 @@
-const mongoose = require( 'mongoose' );
-const vehicleSchema = new mongoose.Schema( {
+const mongoose = require('mongoose');
+
+const vehicleSchema = new mongoose.Schema({
     vehicleName: {
         type: String,
         required: true,
@@ -20,7 +21,20 @@ const vehicleSchema = new mongoose.Schema( {
         type: String,
         required: true,
         trim: true
+    },
+    status: {
+        type: String,
+        enum: ['active', 'maintenance', 'inactive'],
+        default: 'active'
+    },
+    mileage: {
+        type: Number,
+        default: 0
+    },
+    lastService: {
+        type: String,
+        default: 'N/A'
     }
-} );
+}, { timestamps: true });
 
-module.exports = mongoose.model( 'Vehicle', vehicleSchema );
+module.exports = mongoose.model('Vehicle', vehicleSchema);
